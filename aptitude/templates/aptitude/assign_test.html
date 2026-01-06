@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Assign Aptitude Test</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <style>
+        body {
+            background: #eef1f5;
+            font-family: "Poppins", sans-serif;
+        }
+
+        .form-card {
+            background: #fff;
+            padding: 30px;
+            border-radius: 14px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            width: 450px;
+            margin: 50px auto;
+        }
+
+        h2 {
+            font-weight: 600;
+            color: #333;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        label {
+            font-weight: 500;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+
+<body>
+     {% include 'sidebar.html' %}
+
+<div class="form-card">
+
+
+    <h2>Assign Aptitude Test</h2>
+
+    <form method="post">
+        {% csrf_token %}
+
+        <label>Concept</label>
+        <select name="concept" class="form-select">
+            {% for c in concepts %}
+            <option value="{{ c.id }}">{{ c.name }}</option>
+            {% endfor %}
+        </select>
+
+        <label>No. of Questions</label>
+        <input type="number" name="num_questions" class="form-control" placeholder="Enter number of questions">
+
+        <button class="btn btn-primary w-100 mt-4">Assign Test</button>
+    </form>
+
+</div>
+
+</body>
+</html>

@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Assigned Tests</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <style>
+        body {
+            background: #eef1f5;
+            font-family: "Poppins", sans-serif;
+        }
+
+        .page-card {
+            background: #fff;
+            padding: 25px;
+            margin: 40px auto;
+            width: 100%;
+            max-width: 800px;
+            border-radius: 14px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        h2 {
+            font-weight: 600;
+            color: #333;
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        table thead {
+            background: #343a40;
+            color: #fff;
+        }
+
+        tbody tr:hover {
+            background: #f2f6ff;
+        }
+
+        .btn-info {
+            background-color: #0dcaf0;
+            border: none;
+        }
+    </style>
+</head>
+
+<body>
+    {% include 'sidebar.html' %}
+
+<div class="page-card">
+
+    <h2>Assigned Tests</h2>
+
+    <div class="table-responsive">
+        <table class="table table-bordered table-striped align-middle">
+
+            <thead class="text-center">
+                <tr>
+                    <th>ID</th>
+                    <th>Concept</th>
+                    <th>No. of Questions</th>
+                    <th>Date</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for s in sessions %}
+                <tr>
+                    <td class="text-center">{{ s.id }}</td>
+                    <td>{{ s.concept.name }}</td>
+                    <td class="text-center">{{ s.num_questions }}</td>
+                    <td>{{ s.created_at|date:"d-m-Y H:i" }}</td>
+                    <td class="text-center">
+                        <a href="{% url 'session_detail' s.id %}" class="btn btn-sm btn-info">
+                            View Interns
+                        </a>
+                    </td>
+                    <td class="text-center">
+    
+    <a href="{% url 'delete_session' s.id %}" 
+       class="btn btn-sm btn-danger"
+       onclick="return confirm('Are you sure you want to delete this test?');">
+        Delete
+    </a>
+</td>
+
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="text-center text-muted py-3">
+                        No tests assigned yet.
+                    </td>
+                </tr>
+                
+                {% endfor %}
+            </tbody>
+
+        </table>
+    </div>
+
+</div>
+
+</body>
+</html>

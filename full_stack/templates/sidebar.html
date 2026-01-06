@@ -1,0 +1,78 @@
+{% load static %}
+
+<style>
+    /* Sidebar styling */
+    .sidebar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        height: 100%;
+        width: 230px;
+        background-color: #007bff;
+        color: white;
+        padding-top: 20px;
+        box-shadow: 3px 0 10px rgba(0, 0, 0, 0.2);
+        z-index: 1000;
+    }
+
+    .sidebar h3 {
+        text-align: center;
+        font-weight: 600;
+        margin-bottom: 30px;
+        font-size: 1.5rem;
+    }
+
+    .sidebar a {
+        display: block;
+        color: white;
+        padding: 12px 20px;
+        text-decoration: none;
+        font-size: 1rem;
+        border-radius: 8px;
+        margin: 8px 10px;
+        transition: 0.3s;
+    }
+
+    .sidebar a:hover, .sidebar a.active {
+        background-color: #0056b3;
+    }
+
+    .sidebar .bottom-link {
+        position: absolute;
+        bottom: 20px;
+        width: 100%;
+    }
+
+    .main-content {
+        margin-left: 240px;
+        padding: 20px;
+    }
+
+    @media (max-width: 768px) {
+        .sidebar {
+            width: 100%;
+            height: auto;
+            position: relative;
+        }
+        .main-content {
+            margin-left: 0;
+        }
+    }
+</style>
+
+<div class="sidebar">
+    {% comment %} <h3>🧠 Task App</h3> {% endcomment %}
+    <a href="{% url 'generate_tasks' %}" class="{% if request.path == '/generate/' %}active{% endif %}">🏠 Home</a>
+    
+    <a href="{% url 'add_language' %}">🌐 Add Language</a>
+<a href="{% url 'add_concept' %}">📘 Add Concept</a>
+<a href="{% url 'add_task' %}">📝 Add Task</a>
+<a href="{% url 'add_intern' %}">📝 Add Interns</a>
+<a href="{% url 'start_daily_tasks' %}">📝 start daily tasks</a>
+<a href="{% url 'apt-home' %}">📝 Aptitude</a>
+<a href="{% url 'profile' %}" class="{% if request.path == '/profile/' %}active{% endif %}">👤 Profile</a>
+
+    <div class="bottom-link">
+        <a href="{% url 'logout_view' %}">🚪 Logout</a>
+    </div>
+</div>
