@@ -248,32 +248,42 @@ def download_word(request):
 #         return redirect('/generate-tasks?email_sent=false')
 
 
+import logging
+import resend
+
+from django.conf import settings
+from django.contrib import messages
+from django.shortcuts import redirect
+
+logger = logging.getLogger(__name__)
+
+
 def send_email(request):
     if request.method != "POST":
-        return redirect('generate_tasks')
+        return redirect("generate_tasks")
 
-    task_data = request.session.get('task_data', [])
-    intern_emails = request.POST.getlist('interns')
+    task_data = request.session.get("task_data", [])
+    intern_emails = request.POST.getlist("interns")
 
     if not task_data:
         messages.error(
             request,
             "No generated tasks found. Please generate tasks first."
         )
-        return redirect('generate_tasks')
+        return redirect("generate_tasks")
 
     if not intern_emails:
         messages.warning(
             request,
             "Please select at least one intern."
         )
-        return redirect('generate_tasks')
+        return redirect("generate_tasks")
 
     # Only allow emails belonging to this mentor's interns
     allowed_emails = set(
         Intern.objects.filter(
             mentor=request.user
-        ).values_list('email', flat=True)
+        ).values_list("email", flat=True)
     )
 
     intern_emails = list(dict.fromkeys(
@@ -286,48 +296,65 @@ def send_email(request):
             request,
             "No valid intern email addresses were selected."
         )
-        return redirect('generate_tasks')
+        return redirect("generate_tasks")
 
-    message = "\n".join(
+    if not settings.RESEND_API_KEY:
+        messages.error(
+            request,
+            "Email service is not configured. Please contact the administrator."
+        )
+        return redirect("generate_tasks")
+
+    task_message = "\n".join(
         f"{i + 1}. {task}"
         for i, task in enumerate(task_data)
     )
 
+    resend.api_key = settings.RESEND_API_KEY
+    sent_count = 0
+
     try:
-        email = EmailMessage(
-            subject='Your Generated Tasks',
-            body=message,
-            from_email=None,
-            to=[],
-            bcc=intern_emails
+        for recipient in intern_emails:
+            resend.Emails.send({
+                "from": settings.RESEND_FROM_EMAIL,
+                "to": [recipient],
+                "subject": "Your Generated Tasks",
+                "text": (
+                    "Hello,\n\n"
+                    "Here are your generated tasks:\n\n"
+                    f"{task_message}\n\n"
+                    "Please complete the assigned tasks."
+                ),
+            })
+
+            sent_count += 1
+
+        messages.success(
+            request,
+            f"Tasks emailed successfully to {sent_count} intern(s)!"
         )
 
-        sent_count = email.send(fail_silently=False)
+    except Exception:
+        logger.exception(
+            "Resend email delivery request failed"
+        )
 
         if sent_count:
-            messages.success(
+            messages.warning(
                 request,
-                f"Tasks emailed successfully to "
-                f"{len(intern_emails)} selected intern(s)!"
+                f"Email requests succeeded for {sent_count} intern(s), "
+                "but sending stopped because another request failed. "
+                "Check the server logs."
             )
         else:
             messages.error(
                 request,
-                "The email could not be sent. Please try again."
+                "Unable to send emails. Check your Resend API key, "
+                "sender verification, and Render logs."
             )
 
-    except Exception:
-        # Log the full exception in your server logs
-        import logging
-        logging.exception("Email sending failed")
+    return redirect("generate_tasks")
 
-        messages.error(
-            request,
-            "Email sending failed. Please check your email "
-            "configuration and try again."
-        )
-
-    return redirect('generate_tasks')
 
 
 from django.shortcuts import render, redirect
