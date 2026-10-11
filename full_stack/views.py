@@ -7,42 +7,144 @@ import random
 from io import BytesIO
 from docx import Document
 
+from django.contrib import messages
+from django.shortcuts import render, redirect
+
+
 # 🧠 Generate Tasks
 from .models import Intern  # import your Intern model
 
+# def generate_tasks(request):
+#     try:
+#         generated_tasks = []
+#         interns = Intern.objects.filter(mentor=request.user)  # get all interns
+
+#         if request.method == "POST":
+#             form = TaskGeneratorForm(request.POST)
+#             if form.is_valid():
+#                 languages = form.cleaned_data['languages']
+#                 concepts = form.cleaned_data['concepts']
+#                 num = form.cleaned_data['number_of_tasks']
+
+#                 all_tasks = Task.objects.filter(concept__language__in=languages)
+#                 if concepts.exists():
+#                     all_tasks = all_tasks.filter(concept__in=concepts)
+
+#                 generated_tasks = random.sample(list(all_tasks), min(num, all_tasks.count()))
+#                 request.session['task_data'] = [task.description for task in generated_tasks]
+#         else:
+#             form = TaskGeneratorForm()
+
+#         return render(
+#             request,
+#             'generate_tasks.html',
+#             {
+#                 'form': form,
+#                 'tasks': generated_tasks,
+#                 'interns': interns,  # pass interns to template
+#             }
+#         )
+#     except Exception as e:
+#         return HttpResponse(f"❌ Error while generating tasks: {e}")
+
+
+
+
+import random
+import logging
+
+from django.contrib import messages
+from django.shortcuts import render
+
+logger = logging.getLogger(__name__)
+
+
 def generate_tasks(request):
-    try:
-        generated_tasks = []
-        interns = Intern.objects.filter(mentor=request.user)  # get all interns
+    generated_tasks = []
+    interns = Intern.objects.filter(mentor=request.user)
 
-        if request.method == "POST":
-            form = TaskGeneratorForm(request.POST)
-            if form.is_valid():
-                languages = form.cleaned_data['languages']
-                concepts = form.cleaned_data['concepts']
-                num = form.cleaned_data['number_of_tasks']
+    if request.method == "POST":
+        form = TaskGeneratorForm(request.POST)
 
-                all_tasks = Task.objects.filter(concept__language__in=languages)
+        if form.is_valid():
+            languages = form.cleaned_data["languages"]
+            concepts = form.cleaned_data["concepts"]
+            num = form.cleaned_data["number_of_tasks"]
+
+            try:
+                all_tasks = Task.objects.filter(
+                    concept__language__in=languages
+                )
+
                 if concepts.exists():
-                    all_tasks = all_tasks.filter(concept__in=concepts)
+                    all_tasks = all_tasks.filter(
+                        concept__in=concepts
+                    )
 
-                generated_tasks = random.sample(list(all_tasks), min(num, all_tasks.count()))
-                request.session['task_data'] = [task.description for task in generated_tasks]
+                # Remove duplicate tasks
+                all_tasks = list(all_tasks.distinct())
+
+                # Check whether tasks are available
+                if not all_tasks:
+                    messages.warning(
+                        request,
+                        "No tasks found under the selected concepts. "
+                        "Please add tasks first."
+                    )
+                    request.session.pop("task_data", None)
+
+                else:
+                    # Generate the requested number of tasks,
+                    # or all available tasks if fewer exist
+                    count = min(num, len(all_tasks))
+                    generated_tasks = random.sample(
+                        all_tasks, count
+                    )
+
+                    request.session["task_data"] = [
+                        task.description
+                        for task in generated_tasks
+                    ]
+
+                    messages.success(
+                        request,
+                        f"{len(generated_tasks)} task(s) "
+                        "generated successfully!"
+                    )
+
+                    if len(generated_tasks) < num:
+                        messages.info(
+                            request,
+                            f"Only {len(generated_tasks)} task(s) "
+                            "are available for your selection."
+                        )
+
+            except Exception:
+                logger.exception("Error while generating tasks")
+                messages.error(
+                    request,
+                    "Something went wrong while generating tasks. "
+                    "Please try again."
+                )
+
         else:
-            form = TaskGeneratorForm()
+            messages.error(
+                request,
+                "Please select valid languages and concepts"
+            )
 
-        return render(
-            request,
-            'generate_tasks.html',
-            {
-                'form': form,
-                'tasks': generated_tasks,
-                'interns': interns,  # pass interns to template
-            }
-        )
-    except Exception as e:
-        return HttpResponse(f"❌ Error while generating tasks: {e}")
+    else:
+        form = TaskGeneratorForm()
 
+    return render(
+        request,
+        "generate_tasks.html",
+        {
+            "form": form,
+            "tasks": generated_tasks,
+            "interns": interns,
+        }
+    )
 
 
 def generate_task(request):
@@ -116,33 +218,117 @@ def download_word(request):
 
 
 # 📧 Send Tasks via Email
+# def send_email(request):
+#     try:
+#         task_data = request.session.get('task_data', [])
+#         if not task_data:
+#             return redirect('generate_tasks')
+
+#         # Get selected interns (can be multiple)
+#         intern_emails = request.POST.getlist('interns')  # note getlist() for multi-select
+#         print(intern_emails)
+#         if not intern_emails:
+#             return redirect('generate_tasks')
+
+#         # Prepare message
+#         message = "\n".join([f"{i+1}. {t}" for i, t in enumerate(task_data)])
+#         email = EmailMessage(
+#             'Your Generated Tasks',
+#             message,
+#             'mkeerthilakshmi@gmail.com',  # your sender email
+#             to=[],  # leave 'to' empty
+#             bcc=intern_emails  # send to all selected interns
+#         )
+#         email.send(fail_silently=False)
+
+#         return redirect('generate_tasks')
+
+#     except Exception as e:
+#         print("Email send error:", e)
+#         return redirect('/generate-tasks?email_sent=false')
+
+
 def send_email(request):
-    try:
-        task_data = request.session.get('task_data', [])
-        if not task_data:
-            return redirect('generate_tasks')
-
-        # Get selected interns (can be multiple)
-        intern_emails = request.POST.getlist('interns')  # note getlist() for multi-select
-        if not intern_emails:
-            return redirect('generate_tasks')
-
-        # Prepare message
-        message = "\n".join([f"{i+1}. {t}" for i, t in enumerate(task_data)])
-        email = EmailMessage(
-            'Your Generated Tasks',
-            message,
-            'mkeerthilakshmi@gmail.com',  # your sender email
-            to=[],  # leave 'to' empty
-            bcc=intern_emails  # send to all selected interns
-        )
-        email.send(fail_silently=False)
-
+    if request.method != "POST":
         return redirect('generate_tasks')
 
-    except Exception as e:
-        print("Email send error:", e)
-        return redirect('/generate-tasks?email_sent=false')
+    task_data = request.session.get('task_data', [])
+    intern_emails = request.POST.getlist('interns')
+
+    if not task_data:
+        messages.error(
+            request,
+            "No generated tasks found. Please generate tasks first."
+        )
+        return redirect('generate_tasks')
+
+    if not intern_emails:
+        messages.warning(
+            request,
+            "Please select at least one intern."
+        )
+        return redirect('generate_tasks')
+
+    # Only allow emails belonging to this mentor's interns
+    allowed_emails = set(
+        Intern.objects.filter(
+            mentor=request.user
+        ).values_list('email', flat=True)
+    )
+
+    intern_emails = list(dict.fromkeys(
+        email for email in intern_emails
+        if email in allowed_emails
+    ))
+
+    if not intern_emails:
+        messages.error(
+            request,
+            "No valid intern email addresses were selected."
+        )
+        return redirect('generate_tasks')
+
+    message = "\n".join(
+        f"{i + 1}. {task}"
+        for i, task in enumerate(task_data)
+    )
+
+    try:
+        email = EmailMessage(
+            subject='Your Generated Tasks',
+            body=message,
+            from_email=None,
+            to=[],
+            bcc=intern_emails
+        )
+
+        sent_count = email.send(fail_silently=False)
+
+        if sent_count:
+            messages.success(
+                request,
+                f"Tasks emailed successfully to "
+                f"{len(intern_emails)} selected intern(s)!"
+            )
+        else:
+            messages.error(
+                request,
+                "The email could not be sent. Please try again."
+            )
+
+    except Exception:
+        # Log the full exception in your server logs
+        import logging
+        logging.exception("Email sending failed")
+
+        messages.error(
+            request,
+            "Email sending failed. Please check your email "
+            "configuration and try again."
+        )
+
+    return redirect('generate_tasks')
+
 
 from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login, logout
