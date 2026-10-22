@@ -1,138 +1,353 @@
- 
-<h2 class="test-title">Test Questions</h2>
 
-<form method="post" class="test-form">
-    {% csrf_token %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    {% for q in questions %}
-    <div class="question-card">
-        <div class="question-header">
-            <span class="question-number">Q{{ forloop.counter }}</span>
-            <p class="question-text">{{ q.question }}</p>
-        </div>
+    <title>Test Questions</title>
 
-        <div class="input-group">
-            <label class="input-label">Your Answer</label>
-            <textarea 
-                class="input-box"
-                name="answer_{{ q.id }}"
-                rows="3"
-                placeholder="Write your answer..."
-            ></textarea>
-        </div>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+          rel="stylesheet">
 
-        <div class="input-group">
-            <label class="input-label">Your Explanation</label>
-            <textarea 
-                class="input-box"
-                name="explanation_{{ q.id }}"
-                rows="3"
-                placeholder="Explain why you chose this answer..."
-            ></textarea>
-        </div>
-    </div>
-    {% endfor %}
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+          rel="stylesheet">
 
-    <div class="submit-center">
-        <button class="submit-btn">Submit Test</button>
-    </div>
-</form>
+    <style>
+        body {
+            background: #eef2f7;
+            font-family: "Inter", sans-serif !important;
+            padding: 25px 15px;
+        }
 
-<style>
-    body {
-        background: #eef2f7;
-        font-family: "Inter", sans-serif !important;
-    }
+        .test-title {
+            text-align: center;
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 30px;
+            color: #1f2d3d;
+        }
 
-    .test-title {
-        text-align: center;
-        font-size: 32px;
-        font-weight: 700;
-        margin-bottom: 30px;
-        color: #1f2d3d;
-    }
+        .test-form {
+            max-width: 850px;
+            margin: auto;
+        }
 
-    .test-form {
-        max-width: 850px;
-        margin: auto;
-    }
+        .question-card {
+            background: white;
+            padding: 25px 30px;
+            margin-bottom: 25px;
+            border-radius: 18px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.06);
+            border-left: 6px solid #4a90e2;
+        }
 
-    .question-card {
-        background: white;
-        padding: 25px 30px;
-        margin-bottom: 25px;
-        border-radius: 18px;
-        box-shadow: 0px 4px 15px rgba(0,0,0,0.06);
-        border-left: 6px solid #4a90e2;
-    }
+        .question-header {
+            margin-bottom: 20px;
+        }
 
-    .question-header {
-        margin-bottom: 20px;
-    }
+        .question-number {
+            font-size: 20px;
+            font-weight: 700;
+            color: #4a90e2;
+        }
 
-    .question-number {
-        font-size: 20px;
-        font-weight: 700;
-        color: #4a90e2;
-    }
+        .question-text {
+            font-size: 18px;
+            font-weight: 600;
+            margin-left: 5px;
+            color: #2c3e50;
+            display: inline;
+            overflow-wrap: anywhere;
+        }
 
-    .question-text {
-        font-size: 18px;
-        font-weight: 600;
-        margin-left: 5px;
-        color: #2c3e50;
-        display: inline;
-    }
+        .input-group {
+            margin-top: 18px;
+            display: block;
+        }
 
-    .input-group {
-        margin-top: 18px;
-    }
+        .input-label {
+            font-size: 15px;
+            font-weight: 600;
+            margin-bottom: 6px;
+            color: #34495e;
+            display: block;
+        }
 
-    .input-label {
-        font-size: 15px;
-        font-weight: 600;
-        margin-bottom: 6px;
-        color: #34495e;
-        display: block;
-    }
+        .input-box {
+            width: 100%;
+            padding: 12px 14px;
+            border: 1px solid #d0d7e2;
+            border-radius: 12px;
+            font-size: 15px;
+            background: #f9fbfd;
+            transition: 0.2s;
+            resize: vertical;
+        }
 
-    .input-box {
-        width: 100%;
-        padding: 12px 14px;
-        border: 1px solid #d0d7e2;
-        border-radius: 12px;
-        font-size: 15px;
-        background: #f9fbfd;
-        transition: 0.2s;
-    }
+        .input-box:focus {
+            border-color: #4a90e2;
+            background: white;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.15);
+        }
 
-    .input-box:focus {
-        border-color: #4a90e2;
-        background: white;
-        outline: none;
-        box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.15);
-    }
+        .input-box.is-invalid {
+            border-color: #dc3545;
+        }
 
-    .submit-center {
-        text-align: center;
-        margin-top: 30px;
-    }
+        .field-error {
+            color: #dc3545;
+            font-size: 13px;
+            margin-top: 5px;
+            display: none;
+        }
 
-    .submit-btn {
-        background: #4a90e2;
-        padding: 12px 40px;
-        font-size: 17px;
-        font-weight: 600;
-        color: white;
-        border: none;
-        border-radius: 30px;
-        cursor: pointer;
-        transition: 0.25s;
-        box-shadow: 0px 4px 12px rgba(74,144,226,0.3);
-    }
+        .submit-center {
+            text-align: center;
+            margin-top: 30px;
+            margin-bottom: 35px;
+        }
 
-    .submit-btn:hover {
-        background: #3b7fc9;
-        box-shadow: 0px 5px 15px rgba(74,144,226,0.4);
-    }
-</style>
+        .submit-btn {
+            background: #4a90e2;
+            padding: 12px 40px;
+            font-size: 17px;
+            font-weight: 600;
+            color: white;
+            border: none;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: 0.25s;
+            box-shadow: 0 4px 12px rgba(74, 144, 226, 0.3);
+        }
+
+        .submit-btn:hover {
+            background: #3b7fc9;
+            box-shadow: 0 5px 15px rgba(74, 144, 226, 0.4);
+        }
+
+        .validation-alert {
+            max-width: 850px;
+            margin: 0 auto 20px;
+        }
+
+        @media (max-width: 576px) {
+            .question-card {
+                padding: 20px 16px;
+            }
+
+            .test-title {
+                font-size: 26px;
+            }
+
+            .question-text {
+                font-size: 16px;
+            }
+
+            .submit-btn {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <h2 class="test-title">Test Questions</h2>
+
+    <!-- Django validation messages -->
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-danger validation-alert"
+                 role="alert">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <form method="post" class="test-form" id="testForm">
+        {% csrf_token %}
+
+        {% for q in questions %}
+            <div class="question-card">
+
+                <div class="question-header">
+                    <span class="question-number">
+                        Q{{ forloop.counter }}
+                    </span>
+
+                    <p class="question-text">
+                        {{ q.question }}
+                    </p>
+                </div>
+
+                <!-- Answer field -->
+                <div class="input-group">
+                    <label for="answer_{{ q.id }}"
+                           class="input-label">
+                        Your Answer <span class="text-danger">*</span>
+                    </label>
+
+                    <textarea
+                        id="answer_{{ q.id }}"
+                        class="input-box validate-field"
+                        name="answer_{{ q.id }}"
+                        rows="3"
+                        placeholder="Write your answer..."
+                        required
+                    >{{ q.submitted_answer|default:"" }}</textarea>
+
+                    <div class="field-error">
+                        Please enter your answer.
+                    </div>
+                </div>
+
+                <!-- Explanation field -->
+                <div class="input-group">
+                    <label for="explanation_{{ q.id }}"
+                           class="input-label">
+                        Your Explanation
+                        <span class="text-danger">*</span>
+                    </label>
+
+                    <textarea
+                        id="explanation_{{ q.id }}"
+                        class="input-box validate-field"
+                        name="explanation_{{ q.id }}"
+                        rows="3"
+                        placeholder="Explain why you chose this answer..."
+                        required
+                    >{{ q.submitted_explanation|default:"" }}</textarea>
+
+                    <div class="field-error">
+                        Please enter your explanation.
+                    </div>
+                </div>
+
+            </div>
+        {% empty %}
+            <div class="alert alert-warning">
+                No questions are available for this test.
+            </div>
+        {% endfor %}
+
+        {% if questions %}
+            <div class="submit-center">
+                <button type="submit"
+                        class="submit-btn"
+                        id="submitBtn">
+                    Submit Test
+                </button>
+            </div>
+        {% endif %}
+
+    </form>
+
+    <script>
+        const testForm = document.getElementById("testForm");
+        const fields = document.querySelectorAll(".validate-field");
+
+        // Validate fields when the intern leaves a field.
+        fields.forEach(function (field) {
+            field.addEventListener("blur", function () {
+                validateField(field);
+            });
+
+            // Remove the error when the intern starts correcting it.
+            field.addEventListener("input", function () {
+                if (field.value.trim() !== "") {
+                    field.classList.remove("is-invalid");
+
+                    const error = field.parentElement.querySelector(
+                        ".field-error"
+                    );
+
+                    if (error) {
+                        error.style.display = "none";
+                    }
+                }
+            });
+        });
+
+        function validateField(field) {
+            const error = field.parentElement.querySelector(
+                ".field-error"
+            );
+
+            if (field.value.trim() === "") {
+                field.classList.add("is-invalid");
+
+                if (error) {
+                    error.style.display = "block";
+                }
+
+                return false;
+            }
+
+            field.classList.remove("is-invalid");
+
+            if (error) {
+                error.style.display = "none";
+            }
+
+            return true;
+        }
+
+        testForm.addEventListener("submit", function (event) {
+            let isValid = true;
+            let firstInvalidField = null;
+
+            fields.forEach(function (field) {
+                if (!validateField(field)) {
+                    isValid = false;
+
+                    if (!firstInvalidField) {
+                        firstInvalidField = field;
+                    }
+                }
+            });
+
+            if (!isValid) {
+                event.preventDefault();
+
+                firstInvalidField.focus();
+
+                const existingAlert = document.getElementById(
+                    "clientValidationAlert"
+                );
+
+                if (!existingAlert) {
+                    const alertBox = document.createElement("div");
+
+                    alertBox.id = "clientValidationAlert";
+                    alertBox.className =
+                        "alert alert-danger validation-alert";
+
+                    alertBox.setAttribute("role", "alert");
+
+                    alertBox.textContent =
+                        "Please fill in both your answer and explanation " +
+                        "for every question before submitting.";
+
+                    testForm.parentNode.insertBefore(
+                        alertBox,
+                        testForm
+                    );
+                }
+
+                return;
+            }
+
+            const alertBox = document.getElementById(
+                "clientValidationAlert"
+            );
+
+            if (alertBox) {
+                alertBox.remove();
+            }
+        });
+    </script>
+
+</body>
+</html>

@@ -147,36 +147,36 @@ def generate_tasks(request):
     )
 
 
-def generate_task(request):
-    generated_tasks = []
-    interns = Intern.objects.filter(mentor=request.user)
+# def generate_task(request):
+#     generated_tasks = []
+#     interns = Intern.objects.filter(mentor=request.user)
 
-    if request.method == "POST":
-        form = TaskGeneratorForms(request.POST)
-        if form.is_valid():
-            languages = form.cleaned_data['languages']
-            concepts = form.cleaned_data['concepts']
-            num = form.cleaned_data['number_of_tasks']
+#     if request.method == "POST":
+#         form = TaskGeneratorForms(request.POST)
+#         if form.is_valid():
+#             languages = form.cleaned_data['languages']
+#             concepts = form.cleaned_data['concepts']
+#             num = form.cleaned_data['number_of_tasks']
 
-            all_tasks = Task.objects.filter(concept__language__in=languages)
+#             all_tasks = Task.objects.filter(concept__language__in=languages)
 
-            if concepts:
-                all_tasks = all_tasks.filter(concept__in=concepts)
+#             if concepts:
+#                 all_tasks = all_tasks.filter(concept__in=concepts)
 
-            generated_tasks = random.sample(
-                list(all_tasks),
-                min(num, all_tasks.count())
-            )
+#             generated_tasks = random.sample(
+#                 list(all_tasks),
+#                 min(num, all_tasks.count())
+#             )
 
-            request.session['task_data'] = [t.description for t in generated_tasks]
-    else:
-        form = TaskGeneratorForms()
+#             request.session['task_data'] = [t.description for t in generated_tasks]
+#     else:
+#         form = TaskGeneratorForms()
 
-    return render(request, 'generateTask.html', {
-        'form': form,
-        'tasks': generated_tasks,
-        'interns': interns
-    })
+#     return render(request, 'generateTask.html', {
+#         'form': form,
+#         'tasks': generated_tasks,
+#         'interns': interns
+#     })
 
 def get_concept(request):
     language_ids = request.GET.getlist('language_ids')

@@ -24,9 +24,26 @@ def assign_test(request):
 
 
 # 2️⃣ List all assigned tests
+
+from django.shortcuts import render
+from django.urls import reverse
+
 def session_list(request):
     sessions = PracticeSession.objects.all().order_by("-created_at")
-    return render(request, "aptitude/session_list.html", {"sessions": sessions})
+
+    for session in sessions:
+        relative_url = reverse(
+            "start_test",
+            kwargs={"session_id": session.id}
+        )
+        session.test_url = request.build_absolute_uri(relative_url)
+
+    return render(
+        request,
+        "aptitude/session_list.html",
+        {"sessions": sessions}
+    )
+
 
 from django.shortcuts import get_object_or_404, redirect
 from django.contrib import messages
@@ -143,40 +160,120 @@ def normalize_answer(ans):
         return ans.lower()  # fallback to lowercase string comparison
 
 # 6️⃣ Show real task questions
+
+from django.contrib import messages
+from django.shortcuts import get_object_or_404, redirect, render
+
 def task_questions(request, attempt_id):
     attempt = get_object_or_404(InternAttempt, id=attempt_id)
-    questions = attempt.selected_questions.all()
+    questions = list(attempt.selected_questions.all())
 
     if request.method == "POST":
+        has_errors = False
+
+        # Validate every question before saving any answers.
         for q in questions:
-            ans = request.POST.get(f"answer_{q.id}")
-            exp = request.POST.get(f"explanation_{q.id}")
+            ans = request.POST.get(f"answer_{q.id}", "").strip()
+            exp = request.POST.get(f"explanation_{q.id}", "").strip()
 
-            intern_ans_normalized = normalize_answer(ans)
-            correct_ans_normalized = normalize_answer(q.correct_answer)
+            # Keep previously entered values when showing validation errors.
+            q.submitted_answer = ans
+            q.submitted_explanation = exp
 
-            # Determine correctness
-            is_correct = False
-            if isinstance(intern_ans_normalized, float) and isinstance(correct_ans_normalized, float):
-                # Allow tiny differences due to rounding
-                is_correct = abs(intern_ans_normalized - correct_ans_normalized) < 0.01
-            else:
-                is_correct = intern_ans_normalized == correct_ans_normalized
+            if not ans or not exp:
+                has_errors = True
 
-            TaskAnswer.objects.create(
-                attempt=attempt,
-                question=q,
-                intern_answer=ans,
-                intern_explanation=exp,
-                is_correct=is_correct
+        if has_errors:
+            messages.error(
+                request,
+                "Please enter both your answer and explanation "
+                "for every question before submitting the test."
             )
 
-        return redirect("final_submit", attempt_id=attempt.id)
+            return render(
+                request,
+                "aptitude/task_questions.html",
+                {
+                    "attempt": attempt,
+                    "questions": questions,
+                }
+            )
 
-    return render(request, "aptitude/task_questions.html", {
-        "attempt": attempt,
-        "questions": questions
-    })
+        try:
+            from django.db import transaction
+
+            with transaction.atomic():
+                for q in questions:
+                    ans = request.POST.get(f"answer_{q.id}", "").strip()
+                    exp = request.POST.get(f"explanation_{q.id}", "").strip()
+
+                    intern_ans_normalized = normalize_answer(ans)
+                    correct_ans_normalized = normalize_answer(
+                        q.correct_answer
+                    )
+
+                    # Determine correctness.
+                    if (
+                        isinstance(intern_ans_normalized, float)
+                        and isinstance(correct_ans_normalized, float)
+                    ):
+                        is_correct = (
+                            abs(
+                                intern_ans_normalized
+                                - correct_ans_normalized
+                            ) < 0.01
+                        )
+                    else:
+                        is_correct = (
+                            intern_ans_normalized
+                            == correct_ans_normalized
+                        )
+
+                    TaskAnswer.objects.create(
+                        attempt=attempt,
+                        question=q,
+                        intern_answer=ans,
+                        intern_explanation=exp,
+                        is_correct=is_correct,
+                    )
+
+            messages.success(
+                request,
+                "Your answers have been submitted successfully!"
+            )
+
+            return redirect("final_submit", attempt_id=attempt.id)
+
+        except Exception:
+            messages.error(
+                request,
+                "An error occurred while saving your answers. "
+                "Please try again."
+            )
+
+            return render(
+                request,
+                "aptitude/task_questions.html",
+                {
+                    "attempt": attempt,
+                    "questions": questions,
+                }
+            )
+
+    # Initialize values for the first page load.
+    for q in questions:
+        q.submitted_answer = ""
+        q.submitted_explanation = ""
+
+    return render(
+        request,
+        "aptitude/task_questions.html",
+        {
+            "attempt": attempt,
+            "questions": questions,
+        }
+    )
+
 
 
 # 7️⃣ Final submit page

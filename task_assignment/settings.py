@@ -177,3 +177,6 @@ import os
 
 RESEND_API_KEY = os.environ.get("RESEND_API_KEY", "")
 RESEND_FROM_EMAIL = os.environ.get("RESEND_FROM_EMAIL", "")
+
+
+#https://task-generation-5kez.onrender.com
