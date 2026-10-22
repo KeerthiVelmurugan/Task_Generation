@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from .models import Concept, PracticeSession, InternAttempt, TaskAnswer, Question
 import random
-from django.decorators import login_required
+from django.contrib.auth.decorators import login_required
 
 @login_required
 def home(request):
