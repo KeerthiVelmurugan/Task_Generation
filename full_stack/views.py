@@ -539,6 +539,7 @@ def add_task(request):
 from django.http import JsonResponse
 
 # Get concepts for selected language
+@login_required
 def get_concepts(request, language_id):
     try:
         concepts = Concept.objects.filter(language_id=language_id).values('id', 'name')
@@ -547,6 +548,7 @@ def get_concepts(request, language_id):
         return JsonResponse({'error': str(e)})
 
 # Get tasks for selected concept
+@login_required
 def get_tasks(request, concept_id):
     try:
         tasks = Task.objects.filter(concept_id=concept_id).values('id', 'description')

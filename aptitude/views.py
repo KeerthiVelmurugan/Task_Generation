@@ -1,12 +1,14 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from .models import Concept, PracticeSession, InternAttempt, TaskAnswer, Question
 import random
+from django.decorators import login_required
 
-
+@login_required
 def home(request):
     return render(request, "aptitude/home.html")
 
 # 1️⃣ Mentor assigns a test
+@login_required
 def assign_test(request):
     concepts = Concept.objects.all()
 
@@ -28,6 +30,7 @@ def assign_test(request):
 from django.shortcuts import render
 from django.urls import reverse
 
+@login_required
 def session_list(request):
     sessions = PracticeSession.objects.all().order_by("-created_at")
 
@@ -49,6 +52,7 @@ from django.shortcuts import get_object_or_404, redirect
 from django.contrib import messages
 from .models import PracticeSession
 
+@login_required
 def delete_session(request, session_id):
     session = get_object_or_404(PracticeSession, id=session_id)
     session.delete()
@@ -58,6 +62,7 @@ def delete_session(request, session_id):
 
 
 # 3️⃣ View intern attempts for a test
+@login_required
 def session_detail(request, session_id):
     session = get_object_or_404(PracticeSession, id=session_id)
     attempts = InternAttempt.objects.filter(session=session)
@@ -286,6 +291,7 @@ def final_submit(request, attempt_id):
 
 
 # 8️⃣ Mentor view intern answers with validation
+@login_required
 def view_attempt(request, attempt_id):
     attempt = get_object_or_404(InternAttempt, id=attempt_id)
     answers = TaskAnswer.objects.filter(attempt=attempt).select_related("question")
